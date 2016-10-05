@@ -28,10 +28,10 @@ update test set value = 11 where id = 1; -- T1
 update test set value = 12 where id = 1; -- T2, BLOCKS
 update test set value = 21 where id = 2; -- T1
 commit; -- T1. This unblocks T2
-select * from test; -- T1. Shows 1 => 12, 2 => 21 (Actual behavior 1 => 11, 2 =>21)
+select * from test; -- T1. Shows 1 => 12, 2 => 21 *(Actual behavior 1 => 11, 2 =>21)*
 update test set value = 22 where id = 2; -- T2
 commit; -- T2
-select * from test; -- either. Shows 1 => 12, 2 => 22 (Correct)
+select * from test; -- either. Shows 1 => 12, 2 => 22 *(Correct)*
 ```
 
 MySQL "read uncommitted" does not prevent Aborted Reads (G1a):
@@ -40,14 +40,15 @@ MySQL "read uncommitted" does not prevent Aborted Reads (G1a):
 set session transaction isolation level read uncommitted; begin; -- T1
 set session transaction isolation level read uncommitted; begin; -- T2
 update test set value = 101 where id = 1; -- T1
-select * from test; -- T2. Shows 1 => 101 (Actual behavior 1 => 10)
+select * from test; -- T2. Shows 1 => 101 *(Actual behavior 1 => 10)*
 rollback; -- T1
-select * from test; -- T2. Shows 1 => 10 again (Correct)
+select * from test; -- T2. Shows 1 => 10 again *(Correct)*
 commit; -- T2
 ```
 
 MySQL "read committed" prevents Aborted Reads (G1a):
-(This test matches expected behavior exactly)
+
+*(This test matches expected behavior exactly)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -65,15 +66,16 @@ MySQL "read uncommitted" does not prevent Intermediate Reads (G1b):
 set session transaction isolation level read uncommitted; begin; -- T1
 set session transaction isolation level read uncommitted; begin; -- T2
 update test set value = 101 where id = 1; -- T1
-select * from test; -- T2. Shows 1 => 101  (Actual behavior 1 => 10)
+select * from test; -- T2. Shows 1 => 101  *(Actual behavior 1 => 10)*
 update test set value = 11 where id = 1; -- T1
 commit; -- T1
-select * from test; -- T2. Now shows 1 => 11 (Correct)
+select * from test; -- T2. Now shows 1 => 11 *(Correct)*
 commit; -- T2
 ```
 
 MySQL "read committed" prevents Intermediate Reads (G1b):
-(This test matches expected behavior exactly)
+
+*(This test matches expected behavior exactly)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -93,14 +95,15 @@ set session transaction isolation level read uncommitted; begin; -- T1
 set session transaction isolation level read uncommitted; begin; -- T2
 update test set value = 11 where id = 1; -- T1
 update test set value = 22 where id = 2; -- T2
-select * from test where id = 2; -- T1. Shows 2 => 22  (Actual behavior 2=> 20)
-select * from test where id = 1; -- T2. Shows 1 => 11  (Actual behavior 1=> 10)
+select * from test where id = 2; -- T1. Shows 2 => 22  *(Actual behavior 2=> 20)*
+select * from test where id = 1; -- T2. Shows 1 => 11  *(Actual behavior 1=> 10)*
 commit; -- T1
 commit; -- T2
 ```
 
 MySQL "read committed" prevents Circular Information Flow (G1c):
-(Matches expected behavior exactly)
+
+*(Matches expected behavior exactly)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -127,15 +130,16 @@ update test set value = 11 where id = 1; -- T1
 update test set value = 19 where id = 2; -- T1
 update test set value = 12 where id = 1; -- T2. BLOCKS
 commit; -- T1. This unblocks T2
-select * from test; -- T3. Shows 1 => 12, 2 => 19 (Actual behavior 1=> 11, 2=>19)
+select * from test; -- T3. Shows 1 => 12, 2 => 19 *(Actual behavior 1=> 11, 2=>19)*
 update test set value = 18 where id = 2; -- T2
-select * from test; -- T3. Shows 1 => 12, 2 => 18 (Actual behavior 1=>11, 2=>19)
+select * from test; -- T3. Shows 1 => 12, 2 => 18 *(Actual behavior 1=>11, 2=>19)*
 commit; -- T2
-commit; -- T3  (If tested after this commit, 1=>12, 2=>18)
+commit; -- T3  *(If tested after this commit, 1=>12, 2=>18)*
 ```
 
 MySQL "read committed" prevents Observed Transaction Vanishes (OTV):
-(Exactly as expected)
+
+*(Exactly as expected)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -158,7 +162,8 @@ Predicate-Many-Preceders (PMP)
 ------------------------------
 
 MySQL "read committed" does not prevent Predicate-Many-Preceders (PMP):
-(Should work as expected)
+
+*(Should work as expected)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -171,7 +176,8 @@ commit; -- T1
 ```
 
 MySQL "repeatable read" prevents Predicate-Many-Preceders (PMP) for read predicates:
-(This isn't really doable.  Since each query is a snapshot, the two T1 queries are run independently, and will get different results)
+
+*(This isn't really doable.  Since each query is a snapshot, the two T1 queries are run independently, and will get different results)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -184,7 +190,8 @@ commit; -- T1
 ```
 
 MySQL "read committed" does not prevent Predicate-Many-Preceders (PMP) for write predicates -- example from Postgres documentation:
-(No delete ... where support, can't run)
+
+*(No delete ... where support, can't run)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -198,7 +205,8 @@ commit; -- T2
 ```
 
 MySQL "repeatable read" does not prevent Predicate-Many-Preceders (PMP) for write predicates -- example from Postgres documentation:
-(No delete ... where support, can't run)
+
+*(No delete ... where support, can't run)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -212,7 +220,8 @@ commit; -- T2
 ```
 
 MySQL "serializable" prevents Predicate-Many-Preceders (PMP) for write predicates -- example from Postgres documentation:
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level serializable; begin; -- T1
@@ -229,7 +238,8 @@ Lost Update (P4)
 ----------------
 
 MySQL "repeatable read" does not prevent Lost Update (P4):
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -243,7 +253,8 @@ commit; -- T2
 ```
 
 MySQL "serializable" prevents Lost Update (P4):
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level serializable; begin; -- T1
@@ -261,7 +272,8 @@ Read Skew (G-single)
 --------------------
 
 MySQL "read committed" does not prevent Read Skew (G-single):
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level read committed; begin; -- T1
@@ -277,7 +289,8 @@ commit; -- T1
 ```
 
 MySQL "repeatable read" prevents Read Skew (G-single) on a read-only transaction:
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -293,7 +306,8 @@ commit; -- T1
 ```
 
 MySQL "repeatable read" prevents Read Skew (G-single) -- test using predicate dependencies:
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -306,7 +320,8 @@ commit; -- T1
 ```
 
 MySQL "repeatable read" does not prevent Read Skew (G-single) on a write predicate:
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -322,7 +337,8 @@ commit; -- T1
 ```
 
 MySQL "serializable" prevents Read Skew (G-single) on a write predicate:
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level serializable; begin; -- T1
@@ -341,7 +357,8 @@ Write Skew (G2-item)
 --------------------
 
 MySQL "repeatable read" does not prevent Write Skew (G2-item):
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -355,7 +372,8 @@ commit; -- T2
 ```
 
 MySQL "serializable" prevents Write Skew (G2-item):
-(No update ... where support, can't run)
+
+*(No update ... where support, can't run)*
 
 ```sql
 set session transaction isolation level serializable; begin; -- T1
@@ -373,7 +391,8 @@ Anti-Dependency Cycles (G2)
 ---------------------------
 
 MySQL "repeatable read" does not prevent Anti-Dependency Cycles (G2):
-(Queries are independent, not governed by txns, this doesn't really apply)
+
+*(Queries are independent, not governed by txns, this doesn't really apply)*
 
 ```sql
 set session transaction isolation level repeatable read; begin; -- T1
@@ -388,7 +407,8 @@ select * from test where value % 3 = 0; -- Either. Returns 3 => 30, 4 => 42
 ```
 
 MySQL "serializable" prevents Anti-Dependency Cycles (G2):
-(Queries are independent, not governed by txns, this doesn't really apply)
+
+*(Queries are independent, not governed by txns, this doesn't really apply)*
 
 ```sql
 set session transaction isolation level serializable; begin; -- T1
@@ -402,7 +422,8 @@ rollback; -- T2
 ```
 
 MySQL "serializable" prevents Anti-Dependency Cycles (G2) -- Fekete et al's example with two anti-dependency edges:
-(Queries are independent, not governed by txns, this doesn't really apply)
+
+*(Queries are independent, not governed by txns, this doesn't really apply)*
 
 ```sql
 set session transaction isolation level serializable; begin; -- T1
